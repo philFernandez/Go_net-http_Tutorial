@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 )
 
 // Page is a data structure that represents a wiki page
@@ -18,7 +19,7 @@ func (p *Page) save() error {
 }
 
 func loadPage(title string) (*Page, error) {
-	filename := title + ".txt"
+	filename := title + ".html"
 	body, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
@@ -26,15 +27,13 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
+func viewHandler(w http.ResponseWriter, r *http.Request) {
+	title := r.URL.Path[len("/view/"):]
+	p, _ := loadPage(title)
+	fmt.Fprintf(w, "<h1>%s</h1><div>%s</div>", p.Title, p.Body)
+}
+
 func main() {
-	p1 := &Page{Title: "Test Page", Body: []byte("This is a sample Page.")}
-	err := p1.save()
-	if err != nil {
-		log.Fatalln("There was a problem writing the page:", err)
-	}
-	p2, err := loadPage("Test Page")
-	if err != nil {
-		log.Fatalln("There was a problem reading the page:", err)
-	}
-	fmt.Println(string(p2.Body))
+	http.HandleFunc("/view/", viewHandler)
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
