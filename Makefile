@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := build
-EXECUTABLE = book
+EXECUTABLE = gwiki
 GREEN = "\033[1;38;5;048m"
 RED = "\033[1;38;5;196m"
 CLS = "\033[0m"
