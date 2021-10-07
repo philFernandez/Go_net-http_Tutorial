@@ -32,27 +32,31 @@ func render(w http.ResponseWriter, templateFile string, p *Page) {
 	t.Execute(w, p)
 }
 
-func viewHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[len("/view/"):]
-	p, err := loadPage(title)
-	if err != nil {
-		http.Redirect(w, r, "/edit/"+title, http.StatusFound)
-		return
-	}
-	render(w, "view", p)
-}
-
-func editHandler(w http.ResponseWriter, r *http.Request) {
-	title := r.URL.Path[len("/edit/"):]
-	p, err := loadPage(title)
-	if err != nil {
-		p = &Page{Title: title}
-	}
-	render(w, "edit", p)
-}
-
 func main() {
-	http.HandleFunc("/view/", viewHandler)
-	http.HandleFunc("/edit/", editHandler)
+	http.HandleFunc("/view/", func(w http.ResponseWriter, r *http.Request) {
+		title := r.URL.Path[len("/view/"):]
+		p, err := loadPage(title)
+		if err != nil {
+			http.Redirect(w, r, "/edit/"+title, http.StatusFound)
+			return
+		}
+		render(w, "view", p)
+	})
+	http.HandleFunc("/edit/", func(w http.ResponseWriter, r *http.Request) {
+		title := r.URL.Path[len("/edit/"):]
+		p, err := loadPage(title)
+		if err != nil {
+			p = &Page{Title: title}
+		}
+		render(w, "edit", p)
+
+	})
+	http.HandleFunc("/save/", func(w http.ResponseWriter, r *http.Request) {
+		title := r.URL.Path[len("/save/"):]
+		body := r.FormValue("body")
+		p := &Page{Title: title, Body: []byte(body)}
+		p.save()
+		http.Redirect(w, r, "/view/"+title, http.StatusFound)
+	})
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
