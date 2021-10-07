@@ -14,7 +14,7 @@ type Page struct {
 }
 
 func (p *Page) save() error {
-	filename := p.Title + ".txt"
+	filename := p.Title + ".html"
 	return ioutil.WriteFile(filename, p.Body, 0600)
 }
 
