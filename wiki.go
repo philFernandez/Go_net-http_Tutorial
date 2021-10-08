@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -58,5 +59,7 @@ func main() {
 		p.save()
 		http.Redirect(w, r, "/view/"+title, http.StatusFound)
 	})
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	const portNumber = ":8080"
+	fmt.Println("Server Started on http://localhost" + portNumber)
+	log.Fatal(http.ListenAndServe(portNumber, nil))
 }
