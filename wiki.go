@@ -1,15 +1,21 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
 )
 
-// Cache all templates so they don't have to be re-read every time they're loaded in the browser.
-var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+var (
+	// Cache all templates so they don't have to be re-read every time they're loaded in the browser.
+	templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+	// Regex for path validation (restrict user to only these paths)
+	validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
+)
 
 // Page is a data structure that represents a wiki page
 type Page struct {
@@ -31,6 +37,15 @@ func loadPage(title string) (*Page, error) {
 	return &Page{Title: title, Body: body}, nil
 }
 
+func getTitle(w http.ResponseWriter, r *http.Request) (string, error) {
+	m := validPath.FindStringSubmatch(r.URL.Path)
+	if m == nil {
+		http.NotFound(w, r)
+		return "", errors.New("invalid Page Title")
+	}
+	return m[2], nil
+}
+
 func render(w http.ResponseWriter, templateFile string, p *Page) {
 	// execute specified cached template using "p" as the object to be expanded in the template
 	if err := templates.ExecuteTemplate(w, templateFile+".html", p); err != nil {
@@ -40,7 +55,10 @@ func render(w http.ResponseWriter, templateFile string, p *Page) {
 
 func main() {
 	http.HandleFunc("/view/", func(w http.ResponseWriter, r *http.Request) {
-		title := r.URL.Path[len("/view/"):]
+		title, err := getTitle(w, r)
+		if err != nil {
+			return
+		}
 		p, err := loadPage(title)
 		if err != nil {
 			http.Redirect(w, r, "/edit/"+title, http.StatusFound)
@@ -49,7 +67,10 @@ func main() {
 		render(w, "view", p)
 	})
 	http.HandleFunc("/edit/", func(w http.ResponseWriter, r *http.Request) {
-		title := r.URL.Path[len("/edit/"):]
+		title, err := getTitle(w, r)
+		if err != nil {
+			return
+		}
 		p, err := loadPage(title)
 		if err != nil {
 			p = &Page{Title: title}
@@ -58,10 +79,13 @@ func main() {
 
 	})
 	http.HandleFunc("/save/", func(w http.ResponseWriter, r *http.Request) {
-		title := r.URL.Path[len("/save/"):]
+		title, err := getTitle(w, r)
+		if err != nil {
+			return
+		}
 		body := r.FormValue("body")
 		p := &Page{Title: title, Body: []byte(body)}
-		err := p.save()
+		err = p.save()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
