@@ -29,8 +29,15 @@ func loadPage(title string) (*Page, error) {
 }
 
 func render(w http.ResponseWriter, templateFile string, p *Page) {
-	t, _ := template.ParseFiles(templateFile + ".html")
-	t.Execute(w, p)
+	t, err := template.ParseFiles(templateFile + ".html")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = t.Execute(w, p)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 }
 
 func main() {
