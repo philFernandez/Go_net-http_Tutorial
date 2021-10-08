@@ -8,6 +8,9 @@ import (
 	"net/http"
 )
 
+// Cache all templates so they don't have to be re-read every time they're loaded in the browser.
+var templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+
 // Page is a data structure that represents a wiki page
 type Page struct {
 	Title string
@@ -29,13 +32,8 @@ func loadPage(title string) (*Page, error) {
 }
 
 func render(w http.ResponseWriter, templateFile string, p *Page) {
-	t, err := template.ParseFiles(templateFile + ".html")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	err = t.Execute(w, p)
-	if err != nil {
+	// execute specified cached template using "p" as the object to be expanded in the template
+	if err := templates.ExecuteTemplate(w, templateFile+".html", p); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
