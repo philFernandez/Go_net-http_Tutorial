@@ -11,7 +11,7 @@ import (
 
 var (
 	// Cache all templates so they don't have to be re-read every time they're loaded in the browser.
-	templates = template.Must(template.ParseFiles("edit.html", "view.html"))
+	templates = template.Must(template.ParseFiles("tmpl/edit.html", "tmpl/view.html"))
 	// Regex for path validation (restrict user to only these paths)
 	validPath = regexp.MustCompile("^/(edit|save|view)/([a-zA-Z0-9]+)$")
 )
