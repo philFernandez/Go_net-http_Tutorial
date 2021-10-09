@@ -55,6 +55,9 @@ func render(w http.ResponseWriter, templateFile string, p *Page) {
 }
 
 func main() {
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/view/FrontPage", http.StatusFound)
+	})
 	http.HandleFunc("/view/", makeHandler(func(w http.ResponseWriter, r *http.Request, title string) {
 		p, err := loadPage(title)
 		if err != nil {
